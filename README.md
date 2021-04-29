@@ -81,6 +81,6 @@ $ flutter packages get
 ```
 
 ## Feature
-- [x] audio capture by microphone
-- [x] set audio stream sampleRate
-- [x] set audio stream channelNumber
+- [x] Audio capture by microphone.
+- [x] Set audio stream sampleRate.
+- [x] Set audio stream channelNumber.
