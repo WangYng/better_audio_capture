@@ -1,6 +1,6 @@
 # better_audio_capture
 
-A simple Audio Capture for Flutter.
+A simple audio capture for Flutter.
 
 ## Install Started
 
