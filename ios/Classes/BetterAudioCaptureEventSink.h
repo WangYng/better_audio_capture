@@ -2,7 +2,7 @@
 //  BetterAudioCaptureEventSink.h
 //  Pods
 //
-//  Created by 汪洋 on 2021/4/29.
+//  Created by 汪洋 on 2022/5/11.
 //
 
 #import <Foundation/Foundation.h>

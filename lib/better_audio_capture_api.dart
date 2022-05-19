@@ -1,87 +1,103 @@
-import 'dart:collection';
-
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 class BetterAudioCaptureApi {
-  Future<void> init(int sampleRate, int channelCount) async {
-    const channel = BasicMessageChannel<dynamic>('com.wangyng.better_audio_capture.init', StandardMessageCodec());
-    final Map<String, dynamic> requestMap = {
-      "sampleRate": sampleRate,
-      "channelCount": channelCount,
-    };
+
+  static Stream resultStream = EventChannel("io.github.wangyng.better_audio_capture/resultStream").receiveBroadcastStream();
+
+  static Future<void> init({required int instanceId, required int sampleRate, required int channelCount}) async {
+    const channel = BasicMessageChannel<dynamic>('io.github.wangyng.better_audio_capture.init', StandardMessageCodec());
+
+    final Map<String, dynamic> requestMap = {};
+    requestMap["instanceId"] = instanceId;
+    requestMap["sampleRate"] = sampleRate;
+    requestMap["channelCount"] = channelCount;
     final reply = await channel.send(requestMap);
 
     if (!(reply is Map)) {
       _throwChannelException();
     }
 
-    Map<String, dynamic> replyMap = Map<String, dynamic>.from(reply);
+    final replyMap = Map<String, dynamic>.from(reply);
     if (replyMap['error'] != null) {
-      final HashMap<String, dynamic> error = replyMap['error'];
+      final error = Map<String, dynamic>.from(replyMap['error']);
       _throwException(error);
+      
     } else {
       // noop
     }
   }
 
-  Future<Stream> startCapture() async {
-    const channel = BasicMessageChannel<dynamic>('com.wangyng.better_audio_capture.startCapture', StandardMessageCodec());
-    final reply = await channel.send({});
+  static Future<void> startCapture({required int instanceId}) async {
+    const channel = BasicMessageChannel<dynamic>('io.github.wangyng.better_audio_capture.startCapture', StandardMessageCodec());
+
+    final Map<String, dynamic> requestMap = {};
+    requestMap["instanceId"] = instanceId;
+    final reply = await channel.send(requestMap);
 
     if (!(reply is Map)) {
       _throwChannelException();
     }
 
-    Map<String, dynamic> replyMap = Map<String, dynamic>.from(reply);
+    final replyMap = Map<String, dynamic>.from(reply);
     if (replyMap['error'] != null) {
-      final HashMap<String, dynamic> error = replyMap['error'];
+      final error = Map<String, dynamic>.from(replyMap['error']);
       _throwException(error);
+      
     } else {
       // noop
     }
-
-    return EventChannel("com.wangyng.better_audio_capture/captureListenerEvent").receiveBroadcastStream();
   }
 
-  Future<void> stopCapture() async {
-    const channel = BasicMessageChannel<dynamic>('com.wangyng.better_audio_capture.stopCapture', StandardMessageCodec());
-    final reply = await channel.send({});
+  static Future<void> stopCapture({required int instanceId}) async {
+    const channel = BasicMessageChannel<dynamic>('io.github.wangyng.better_audio_capture.stopCapture', StandardMessageCodec());
+
+    final Map<String, dynamic> requestMap = {};
+    requestMap["instanceId"] = instanceId;
+    final reply = await channel.send(requestMap);
 
     if (!(reply is Map)) {
       _throwChannelException();
     }
 
-    Map<String, dynamic> replyMap = Map<String, dynamic>.from(reply);
+    final replyMap = Map<String, dynamic>.from(reply);
     if (replyMap['error'] != null) {
-      final HashMap<String, dynamic> error = replyMap['error'];
+      final error = Map<String, dynamic>.from(replyMap['error']);
       _throwException(error);
+      
     } else {
       // noop
     }
   }
 
-  Future<void> dispose() async {
-    const channel = BasicMessageChannel<dynamic>('com.wangyng.better_audio_capture.dispose', StandardMessageCodec());
-    final reply = await channel.send({});
+  static Future<void> dispose({required int instanceId}) async {
+    const channel = BasicMessageChannel<dynamic>('io.github.wangyng.better_audio_capture.dispose', StandardMessageCodec());
+
+    final Map<String, dynamic> requestMap = {};
+    requestMap["instanceId"] = instanceId;
+    final reply = await channel.send(requestMap);
 
     if (!(reply is Map)) {
       _throwChannelException();
     }
 
-    Map<String, dynamic> replyMap = Map<String, dynamic>.from(reply);
+    final replyMap = Map<String, dynamic>.from(reply);
     if (replyMap['error'] != null) {
-      final HashMap<String, dynamic> error = replyMap['error'];
+      final error = Map<String, dynamic>.from(replyMap['error']);
       _throwException(error);
+      
     } else {
       // noop
     }
   }
+
 }
 
 _throwChannelException() {
   throw PlatformException(code: 'channel-error', message: 'Unable to establish connection on channel.', details: null);
 }
 
-_throwException(HashMap<String, dynamic> error) {
-  throw PlatformException(code: error['code'], message: error['message'], details: error['details']);
+_throwException(Map<String, dynamic> error) {
+  throw PlatformException(code: "${error['code']}", message: "${error['message']}", details: "${error['details']}");
 }

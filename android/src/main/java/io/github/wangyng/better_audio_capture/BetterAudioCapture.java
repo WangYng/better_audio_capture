@@ -1,38 +1,16 @@
-package com.wangyng.better_audio_capture;
+package io.github.wangyng.better_audio_capture;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.SystemClock;
-
-import androidx.annotation.NonNull;
+import android.webkit.ValueCallback;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-
-/**
- * BetterAudioCapturePlugin
- */
-public class BetterAudioCapturePlugin implements FlutterPlugin, BetterAudioCaptureApi {
-
-    Handler handler;
-
-    @Override
-    public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
-        BetterAudioCaptureApi.setup(binding.getBinaryMessenger(), this);
-        handler = new Handler(Looper.getMainLooper());
-    }
-
-    @Override
-    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-        BetterAudioCaptureApi.setup(binding.getBinaryMessenger(), null);
-        handler = null;
-    }
+public class BetterAudioCapture {
 
     private AudioRecord audioRecord;
 
@@ -41,7 +19,6 @@ public class BetterAudioCapturePlugin implements FlutterPlugin, BetterAudioCaptu
     private final Lock lock = new ReentrantLock();
     private boolean isStop;
 
-    @Override
     public void init(int sampleRate, int channelCount) {
         int audioChannel = AudioFormat.CHANNEL_IN_MONO;   //单声道
         int audioFormat = AudioFormat.ENCODING_PCM_16BIT; //音频录制格式
@@ -55,8 +32,7 @@ public class BetterAudioCapturePlugin implements FlutterPlugin, BetterAudioCaptu
                 audioFormat, bufferSize);
     }
 
-    @Override
-    public void startCapture(QueuingEventSink eventSink) {
+    public void startCapture(ValueCallback<byte[]> callback) {
         audioRecord.startRecording();
         isStop = false;
 
@@ -81,8 +57,8 @@ public class BetterAudioCapturePlugin implements FlutterPlugin, BetterAudioCaptu
                         byte[] buffer = new byte[audioBuffer.remaining()];
                         audioBuffer.get(buffer);
 
-                        if (handler != null) {
-                            handler.post(() -> eventSink.success(buffer));
+                        if (callback != null) {
+                            callback.onReceiveValue(buffer);
                         }
                     }
 
@@ -95,8 +71,11 @@ public class BetterAudioCapturePlugin implements FlutterPlugin, BetterAudioCaptu
         }.start();
     }
 
-    @Override
     public void stopCapture() {
+        if (isStop) {
+            return;
+        }
+
         lock.lock();
 
         audioRecord.stop();
@@ -105,7 +84,6 @@ public class BetterAudioCapturePlugin implements FlutterPlugin, BetterAudioCaptu
         lock.unlock();
     }
 
-    @Override
     public void dispose() {
         audioRecord.release();
     }

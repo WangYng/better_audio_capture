@@ -2,7 +2,7 @@
 //  BetterAudioCaptureApi.h
 //  Pods
 //
-//  Created by 汪洋 on 2021/4/29.
+//  Created by 汪洋 on 2022/5/11.
 //
 
 #import <Foundation/Foundation.h>
@@ -11,22 +11,21 @@
 
 @protocol BetterAudioCaptureApiDelegate <NSObject>
 
-// 初始化SDK
-- (void)initWithSampleRate:(NSInteger)sampleRate channelCount:(NSInteger)channelCount;
+- (void)setResultStream:(BetterAudioCaptureEventSink *)resultStream;
 
-// 开始获取数据
-- (void)startCaptureWithEventSink:(BetterAudioCaptureEventSink *)eventSink;
+- (void)initWithInstanceId:(NSInteger)instanceId sampleRate:(NSInteger)sampleRate channelCount:(NSInteger)channelCount;
 
-// 结束获取数据
-- (void)stopCapture;
+- (void)startCaptureWithInstanceId:(NSInteger)instanceId;
 
-// 销毁环境
-- (void)dispose;
+- (void)stopCaptureWithInstanceId:(NSInteger)instanceId;
+
+- (void)disposeWithInstanceId:(NSInteger)instanceId;
 
 @end
 
 @interface BetterAudioCaptureApi : NSObject
 
-+ (void)setup:(NSObject<FlutterBinaryMessenger> *)messenger api:(id<BetterAudioCaptureApiDelegate>)api;
++ (void)setup:(NSObject<FlutterPluginRegistrar> *)registrar api:(id<BetterAudioCaptureApiDelegate>)api;
 
 @end
+

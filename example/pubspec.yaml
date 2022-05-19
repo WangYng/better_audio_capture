@@ -1,5 +1,5 @@
 name: better_audio_capture_example
-description: Demonstrates how to use the better_audio_capture plugin.
+description: Demonstrates how to use the better_test plugin.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -13,7 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  permission_handler: ^7.0.0
+  permission_handler: 6.0.0
   just_audio: ^0.7.4
   path_provider: ^2.0.1
   audio_session: ^0.1.0
@@ -25,10 +25,6 @@ dependencies:
     # The example app is bundled with the plugin so we use a path dependency on
     # the parent directory to use the current plugin's version.
     path: ../
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
@@ -75,3 +71,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+

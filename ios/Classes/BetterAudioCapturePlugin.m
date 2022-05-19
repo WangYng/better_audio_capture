@@ -1,17 +1,19 @@
+//
+//  BetterAudioCapturePlugin.m
+//  Pods
+//
+//  Created by 汪洋 on 2022/5/11.
+//
+
 #import "BetterAudioCapturePlugin.h"
 #import "BetterAudioCaptureEventSink.h"
-#import <AVFoundation/AVFoundation.h>
+#import "BetterAudioCapture.h"
 
-@interface BetterAudioCapturePlugin () {
-    dispatch_queue_t audioProcessingQueue;
-}
+@interface BetterAudioCapturePlugin()
 
-@property (nonatomic, strong) BetterAudioCaptureEventSink *eventSink;
+@property(nonatomic, strong)BetterAudioCaptureEventSink *resultStream;
 
-
-@property (nonatomic, strong) AVAudioEngine *audioEngine;
-@property (nonatomic, strong) AVAudioFormat *inputFormat;
-@property (nonatomic, strong) AVAudioFormat *outputFormat;
+@property(nonatomic, strong)NSMutableDictionary *instanceMap;
 
 @end
 
@@ -19,67 +21,50 @@
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     BetterAudioCapturePlugin* instance = [[BetterAudioCapturePlugin alloc] init];
-    [BetterAudioCaptureApi setup:[registrar messenger] api:instance];
+    [BetterAudioCaptureApi setup:registrar api:instance];
 }
 
-- (void)initWithSampleRate:(NSInteger)sampleRate channelCount:(NSInteger)channelCount {
+- (void)initWithInstanceId:(NSInteger)instanceId sampleRate:(NSInteger)sampleRate channelCount:(NSInteger)channelCount {
+    BetterAudioCapture *audioRecord = [[BetterAudioCapture alloc] init];
+    [audioRecord initWithSampleRate:sampleRate channelCount:channelCount];
     
-    _outputFormat = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatInt16 sampleRate:sampleRate channels:(uint32_t)channelCount interleaved:false];
-}
-
-
-- (void)startCaptureWithEventSink:(BetterAudioCaptureEventSink *)eventSink {
-    if (self.audioEngine.isRunning) {
-        return;
+    if (self.instanceMap == nil) {
+        self.instanceMap = [[NSMutableDictionary alloc] init];
     }
-    self.eventSink = eventSink;
-        
-    _audioEngine = [[AVAudioEngine alloc] init];
-    _inputFormat = [self.audioEngine.inputNode  outputFormatForBus:0];
-    
-    __block AVAudioConverter *converter = [[AVAudioConverter alloc] initFromFormat:self.inputFormat toFormat:self.outputFormat];
-    
-    int bufferSize = 1024;
-    
-    __weak typeof(self) ws = self;
-    [self.audioEngine.inputNode installTapOnBus:0 bufferSize:bufferSize format:self.inputFormat block:^(AVAudioPCMBuffer *_Nonnull buffer, AVAudioTime *_Nonnull when) {
-        
-        AVAudioFrameCount resampledFrameSize = buffer.frameCapacity * (ws.outputFormat.sampleRate / ws.inputFormat.sampleRate);
-        
-        AVAudioPCMBuffer *outputBuffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:ws.outputFormat frameCapacity:resampledFrameSize];
-        
-        NSError *resamplingError = nil;
-        
-        [converter convertToBuffer:outputBuffer error:&resamplingError withInputFromBlock:^AVAudioBuffer *(AVAudioPacketCount inNumberOfPackets, AVAudioConverterInputStatus *outStatus) {
-            *outStatus = AVAudioConverterInputStatus_HaveData;
-            return buffer;
-        }];
-        
-        __block NSData *data = [[NSData alloc] initWithBytes:outputBuffer.int16ChannelData[0] length:outputBuffer.frameLength * sizeof(int16_t)];
-        
+    self.instanceMap[@(instanceId)] = audioRecord;
+}
+
+- (void)startCaptureWithInstanceId:(NSInteger)instanceId {
+    if (self.instanceMap == nil) {
+        self.instanceMap = [[NSMutableDictionary alloc] init];
+    }
+    BetterAudioCapture *audioRecord = self.instanceMap[@(instanceId)];
+    [audioRecord startCaptureWithCallback:^(NSData *data) {
         dispatch_sync(dispatch_get_main_queue(), ^{
-            if (ws.eventSink && data) {
-                ws.eventSink.event(data);
+            if (self.resultStream.event != nil) {
+                self.resultStream.event(@{@"instanceId": @(instanceId), @"pcm": data});
             }
         });
     }];
-    
-    NSError *error = nil;
-    [self.audioEngine prepare];
-    if (![self.audioEngine startAndReturnError:&error]) {
-        NSLog(@"wang %@", error.userInfo);
-    }}
-
-
-- (void)stopCapture {
-    if (self.audioEngine.isRunning) {
-        [self.audioEngine.inputNode removeTapOnBus:0];
-        [self.audioEngine stop];
-    }
 }
 
-- (void)dispose {
-    [self stopCapture];
+- (void)stopCaptureWithInstanceId:(NSInteger)instanceId {
+    if (self.instanceMap == nil) {
+        self.instanceMap = [[NSMutableDictionary alloc] init];
+    }
+    BetterAudioCapture *audioRecord = self.instanceMap[@(instanceId)];
+    [audioRecord stopCapture];
+}
+
+- (void)disposeWithInstanceId:(NSInteger)instanceId {
+    if (self.instanceMap == nil) {
+        self.instanceMap = [[NSMutableDictionary alloc] init];
+    }
+    BetterAudioCapture *audioRecord = self.instanceMap[@(instanceId)];
+    if (audioRecord != nil) {
+        [audioRecord dispose];
+        [self.instanceMap removeObjectForKey:@(instanceId)];
+    }
 }
 
 @end

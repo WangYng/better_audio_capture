@@ -1,10 +1,11 @@
-group 'com.wangyng.better_audio_capture'
+group 'io.github.wangyng.better_audio_capture'
 version '1.0'
 
 buildscript {
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
 
     dependencies {
@@ -16,6 +17,7 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
 }
 

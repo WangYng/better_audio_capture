@@ -22,7 +22,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   PermissionStatus? permissionStatus;
 
-  BetterAudioCapture betterAudioCapture = BetterAudioCapture();
+  BetterAudioCapture? betterAudioCapture;
 
   StreamSubscription? subscription;
 
@@ -35,19 +35,18 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     Future.microtask(() async {
-      PermissionStatus permissionStatus = await Permission.microphone.status;
+      PermissionStatus value = await Permission.microphone.status;
       setState(() {
-        this.permissionStatus = permissionStatus;
+        this.permissionStatus = value;
       });
     });
 
-    betterAudioCapture.init();
   }
 
   @override
   void dispose() {
     subscription?.cancel();
-    betterAudioCapture.dispose();
+    betterAudioCapture?.dispose();
     audioPlayer.dispose();
 
     super.dispose();
@@ -80,67 +79,95 @@ class _MyAppState extends State<MyApp> {
                   },
                 ),
               ),
-              CupertinoButton(
-                child: Text("start"),
-                onPressed: () async {
-                  bytesBuilder.clear();
-
-                  // request audio session
-                  final session = await AudioSession.instance;
-                  await session.configure(AudioSessionConfiguration(
-                    avAudioSessionCategory: AVAudioSessionCategory.record,
-                    avAudioSessionMode: AVAudioSessionMode.measurement,
-                    avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
-                    avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
-                  ));
-                  if (await session.setActive(true)) {
-
-                    betterAudioCapture.startCapture().then((Stream<Uint8List> stream) {
-                      subscription = stream.listen((event) {
-                        bytesBuilder.add(event);
-                      });
-                    });
-                  }
-                },
-              ),
-              CupertinoButton(
-                child: Text("stop"),
-                onPressed: () async {
-                  betterAudioCapture.stopCapture();
-                  subscription?.cancel();
-
-                  Directory tempDir = await getTemporaryDirectory();
-                  File waveFile = File(tempDir.path + "/record.wav");
-                  if (waveFile.existsSync()) {
-                    waveFile.deleteSync();
-                  }
-
-                  // 写入wav文件
-                  IOSink waveFileSink = waveFile.openWrite();
-                  waveFileSink.add(betterAudioCapture.waveHeader(bytesBuilder.length));
-                  waveFileSink.add(bytesBuilder.takeBytes());
-                  await waveFileSink.close();
-                },
-              ),
-              CupertinoButton(
-                child: Text("play"),
-                onPressed: () async {
-                  Directory tempDir = await getTemporaryDirectory();
-                  File waveFile = File(tempDir.path + "/record.wav");
-
-                  if (waveFile.existsSync()) {
+              Offstage(
+                offstage: permissionStatus != PermissionStatus.granted,
+                child: CupertinoButton(
+                  child: Text("start"),
+                  onPressed: () async {
+                    bytesBuilder.clear();
 
                     // request audio session
                     final session = await AudioSession.instance;
-                    await session.configure(AudioSessionConfiguration.speech());
+                    await session.configure(AudioSessionConfiguration(
+                      avAudioSessionCategory: AVAudioSessionCategory.record,
+                      avAudioSessionMode: AVAudioSessionMode.measurement,
+                      avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+                      avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+                    ));
 
                     if (await session.setActive(true)) {
-                      audioPlayer = AudioPlayer();
-                      audioPlayer.setFilePath(waveFile.path);
-                      audioPlayer.play();
+                      if (betterAudioCapture != null) {
+                        subscription?.cancel();
+                        betterAudioCapture?.stopCapture();
+                        betterAudioCapture?.dispose();
+                      }
+
+                      betterAudioCapture = BetterAudioCapture();
+                      subscription = betterAudioCapture?.pcmStream.listen((event) {
+                        bytesBuilder.add(event);
+                        print("recording");
+                      });
+
+                      betterAudioCapture?.init();
+                      betterAudioCapture?.startCapture();
                     }
-                  }
-                },
+                  },
+                ),
+              ),
+              Offstage(
+                offstage: permissionStatus != PermissionStatus.granted,
+                child: CupertinoButton(
+                  child: Text("stop"),
+                  onPressed: () async {
+                    if (betterAudioCapture == null) {
+                      return;
+                    }
+
+                    subscription?.cancel();
+                    betterAudioCapture?.stopCapture();
+                    betterAudioCapture?.dispose();
+                    betterAudioCapture = null;
+
+
+                    Directory tempDir = await getTemporaryDirectory();
+                    File waveFile = File(tempDir.path + "/record.wav");
+                    if (waveFile.existsSync()) {
+                      waveFile.deleteSync();
+                    }
+
+                    // 写入wav文件
+                    if (bytesBuilder.length > 0) {
+                      IOSink waveFileSink = waveFile.openWrite();
+                      waveFileSink.add(BetterAudioCapture.waveHeader(bytesBuilder.length));
+                      waveFileSink.add(bytesBuilder.takeBytes());
+                      await waveFileSink.close();
+                    }
+
+                  },
+                ),
+              ),
+              Offstage(
+                offstage: permissionStatus != PermissionStatus.granted,
+                child: CupertinoButton(
+                  child: Text("play"),
+                  onPressed: () async {
+                    Directory tempDir = await getTemporaryDirectory();
+                    File waveFile = File(tempDir.path + "/record.wav");
+
+                    if (waveFile.existsSync() && waveFile.lengthSync() > 0) {
+
+                      // request audio session
+                      final session = await AudioSession.instance;
+                      await session.configure(AudioSessionConfiguration.speech());
+
+                      if (await session.setActive(true)) {
+                        audioPlayer = AudioPlayer();
+                        audioPlayer.setFilePath(waveFile.path);
+                        audioPlayer.play();
+                      }
+                    }
+                  },
+                ),
               ),
             ],
           ),

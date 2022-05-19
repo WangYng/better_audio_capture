@@ -8,7 +8,7 @@ A simple audio capture for Flutter.
 
 ```yaml
 dependencies:
-  better_audio_capture: ^0.0.1
+  better_audio_capture: ^0.0.2
 ```
 
 2. Install it
@@ -20,22 +20,7 @@ $ flutter packages get
 ## Normal usage
 
 ```dart
-  @override
-  void initState() {
-    super.initState();
 
-    betterAudioCapture.init();
-  }
-
-  @override
-  void dispose() {
-    subscription?.cancel();
-    betterAudioCapture.dispose();
-
-    super.dispose();
-  }
-
-  
   CupertinoButton(
     child: Text("start capture"),
     onPressed: () async {
@@ -49,22 +34,26 @@ $ flutter packages get
         avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
         avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
       ));
-      if (await session.setActive(true)) {
 
-        betterAudioCapture.startCapture().then((Stream<Uint8List> stream) {
-          subscription = stream.listen((event) {
-            bytesBuilder.add(event);
-          });
+      if (await session.setActive(true)) {
+        subscription = betterAudioCapture?.pcmStream.listen((event) {
+          bytesBuilder.add(event);
+          print("recording");
         });
+
+        betterAudioCapture?.init(sampleRate: 16000, channelCount: 1);
+        betterAudioCapture?.startCapture();
       }
+    });
     },
   ),
 
   CupertinoButton(
     child: Text("stop capture"),
     onPressed: () async {
-      betterAudioCapture.stopCapture();
       subscription?.cancel();
+      betterAudioCapture.stopCapture();
+      betterAudioCapture.dispose();
 
       Directory tempDir = await getTemporaryDirectory();
       File waveFile = File(tempDir.path + "/record.wav");
@@ -73,7 +62,7 @@ $ flutter packages get
       }
 
       IOSink waveFileSink = waveFile.openWrite();
-      waveFileSink.add(betterAudioCapture.waveHeader(bytesBuilder.length));
+      waveFileSink.add(BetterAudioCapture.waveHeader(bytesBuilder.length));
       waveFileSink.add(bytesBuilder.takeBytes());
       await waveFileSink.close();
     },

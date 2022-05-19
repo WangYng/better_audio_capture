@@ -2,13 +2,12 @@
 //  BetterAudioCaptureEventSink.m
 //  Pods
 //
-//  Created by 汪洋 on 2021/4/29.
+//  Created by 汪洋 on 2022/5/11.
 //
 
 #import "BetterAudioCaptureEventSink.h"
 
 @implementation BetterAudioCaptureEventSink
-
 
 - (FlutterError * _Nullable)onCancelWithArguments:(id _Nullable)arguments {
     self.event = NULL;
