@@ -29,6 +29,9 @@
         return;
     }
     
+    [[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error:nil];
+    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    
     _audioEngine = [[AVAudioEngine alloc] init];
     _inputFormat = [self.audioEngine.inputNode  outputFormatForBus:0];
     

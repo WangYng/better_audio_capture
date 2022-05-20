@@ -8,7 +8,7 @@ A simple audio capture for Flutter.
 
 ```yaml
 dependencies:
-  better_audio_capture: ^0.0.2
+  better_audio_capture: ^0.0.3
 ```
 
 2. Install it
