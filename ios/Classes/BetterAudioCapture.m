@@ -29,8 +29,13 @@
         return;
     }
     
-    [[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error:nil];
-    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    NSError *error = nil;
+    [AVAudioSession.sharedInstance setCategory:AVAudioSessionCategoryPlayAndRecord error:&error];
+    [AVAudioSession.sharedInstance setActive:YES error:&error];
+    
+    if (error != nil) {
+        return;
+    }
     
     _audioEngine = [[AVAudioEngine alloc] init];
     _inputFormat = [self.audioEngine.inputNode  outputFormatForBus:0];
@@ -60,7 +65,6 @@
         }
     }];
     
-    NSError *error = nil;
     [self.audioEngine prepare];
     if (![self.audioEngine startAndReturnError:&error]) {
         NSLog(@"%@", error.userInfo);

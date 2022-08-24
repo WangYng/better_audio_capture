@@ -6,3 +6,6 @@ fix some issue
 
 ## 0.0.3
 fix some issue
+
+## 0.0.4
+fix some issue
