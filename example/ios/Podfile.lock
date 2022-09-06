@@ -35,7 +35,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   audio_session: 4f3e461722055d21515cf3261b64c973c062f345
-  better_audio_capture: 5fd453c34b4bd7918bd0a4bc1fc09a0d05879d3a
+  better_audio_capture: d26aab0600a248c9c7599b1d54b19f92dad21ce4
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   just_audio: baa7252489dbcf47a4c7cc9ca663e9661c99aafa
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c

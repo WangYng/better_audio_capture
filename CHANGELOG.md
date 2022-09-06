@@ -9,3 +9,6 @@ fix some issue
 
 ## 0.0.4
 fix some issue
+
+## 0.0.5
+fix some issue
