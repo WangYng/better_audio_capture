@@ -40,9 +40,7 @@
     _audioEngine = [[AVAudioEngine alloc] init];
     
     AVAudioFormat *recorderFormat = [self.audioEngine.inputNode  inputFormatForBus:0];
-    // fixed: Application threw exception com.apple.coreaudio.avfaudio: required condition is false: format.sampleRate == hwFormat.sampleRate
-    double hwSampleRate = AVAudioSession.sharedInstance.sampleRate;
-    _inputFormat = [[AVAudioFormat alloc] initWithCommonFormat:recorderFormat.commonFormat sampleRate:hwSampleRate channels:recorderFormat.channelCount interleaved:recorderFormat.interleaved];
+    _inputFormat = [[AVAudioFormat alloc] initWithCommonFormat:recorderFormat.commonFormat sampleRate:recorderFormat.sampleRate channels:recorderFormat.channelCount interleaved:recorderFormat.interleaved];
     
     __block AVAudioConverter *converter = [[AVAudioConverter alloc] initFromFormat:self.inputFormat toFormat:self.outputFormat];
     
