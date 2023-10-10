@@ -15,7 +15,7 @@ dependencies:
 
   permission_handler: 6.0.0
   just_audio: ^0.7.4
-  path_provider: ^2.0.1
+  path_provider: 2.0.10
   audio_session: ^0.1.0
 
   better_audio_capture:

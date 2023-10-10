@@ -28,9 +28,10 @@
     if (self.audioEngine.isRunning) {
         return;
     }
-    
+        
     NSError *error = nil;
     [AVAudioSession.sharedInstance setCategory:AVAudioSessionCategoryPlayAndRecord error:&error];
+    [AVAudioSession.sharedInstance setMode:AVAudioSessionModeMeasurement error:&error];
     [AVAudioSession.sharedInstance setActive:YES error:&error];
     
     if (error != nil) {
@@ -40,6 +41,7 @@
     _audioEngine = [[AVAudioEngine alloc] init];
     
     AVAudioFormat *recorderFormat = [self.audioEngine.inputNode  inputFormatForBus:0];
+
     _inputFormat = [[AVAudioFormat alloc] initWithCommonFormat:recorderFormat.commonFormat sampleRate:recorderFormat.sampleRate channels:recorderFormat.channelCount interleaved:recorderFormat.interleaved];
     
     __block AVAudioConverter *converter = [[AVAudioConverter alloc] initFromFormat:self.inputFormat toFormat:self.outputFormat];
@@ -78,6 +80,7 @@
         [self.audioEngine.inputNode removeTapOnBus:0];
         [self.audioEngine stop];
     }
+    _audioEngine = nil;
 }
 
 - (void)dispose {

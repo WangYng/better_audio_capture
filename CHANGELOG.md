@@ -18,3 +18,6 @@ fix some issue
 
 ## 0.0.7
 fix some issue
+
+## 0.1.0
+fix some issue
