@@ -30,48 +30,58 @@
     }
         
     NSError *error = nil;
-    [AVAudioSession.sharedInstance setCategory:AVAudioSessionCategoryPlayAndRecord error:&error];
+    [AVAudioSession.sharedInstance setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionAllowBluetooth error:&error];
     [AVAudioSession.sharedInstance setMode:AVAudioSessionModeMeasurement error:&error];
     [AVAudioSession.sharedInstance setActive:YES error:&error];
     
     if (error != nil) {
+        NSLog(@"麦克风被其它应用程序占用");
         return;
     }
     
     _audioEngine = [[AVAudioEngine alloc] init];
     
     AVAudioFormat *recorderFormat = [self.audioEngine.inputNode  inputFormatForBus:0];
+    
+    if (recorderFormat.sampleRate == 0 || recorderFormat.channelCount == 0) {
+        NSLog(@"麦克风被其它应用程序占用");
+        return;
+    }
 
     _inputFormat = [[AVAudioFormat alloc] initWithCommonFormat:recorderFormat.commonFormat sampleRate:recorderFormat.sampleRate channels:recorderFormat.channelCount interleaved:recorderFormat.interleaved];
-    
+        
     __block AVAudioConverter *converter = [[AVAudioConverter alloc] initFromFormat:self.inputFormat toFormat:self.outputFormat];
-    
-    int bufferSize = 1024;
-    
-    __weak typeof(self) ws = self;
-    [self.audioEngine.inputNode installTapOnBus:0 bufferSize:bufferSize format:self.inputFormat block:^(AVAudioPCMBuffer *_Nonnull buffer, AVAudioTime *_Nonnull when) {
         
-        AVAudioFrameCount resampledFrameSize = buffer.frameCapacity * (ws.outputFormat.sampleRate / ws.inputFormat.sampleRate);
-        
-        AVAudioPCMBuffer *outputBuffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:ws.outputFormat frameCapacity:resampledFrameSize];
-        
-        NSError *resamplingError = nil;
-        
-        [converter convertToBuffer:outputBuffer error:&resamplingError withInputFromBlock:^AVAudioBuffer *(AVAudioPacketCount inNumberOfPackets, AVAudioConverterInputStatus *outStatus) {
-            *outStatus = AVAudioConverterInputStatus_HaveData;
-            return buffer;
+    @try {
+        int bufferSize = 1024;
+
+        __weak typeof(self) ws = self;
+        [self.audioEngine.inputNode installTapOnBus:0 bufferSize:bufferSize format:self.inputFormat block:^(AVAudioPCMBuffer *_Nonnull buffer, AVAudioTime *_Nonnull when) {
+            
+            AVAudioFrameCount resampledFrameSize = buffer.frameCapacity * (ws.outputFormat.sampleRate / ws.inputFormat.sampleRate);
+            
+            AVAudioPCMBuffer *outputBuffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:ws.outputFormat frameCapacity:resampledFrameSize];
+            
+            NSError *resamplingError = nil;
+            
+            [converter convertToBuffer:outputBuffer error:&resamplingError withInputFromBlock:^AVAudioBuffer *(AVAudioPacketCount inNumberOfPackets, AVAudioConverterInputStatus *outStatus) {
+                *outStatus = AVAudioConverterInputStatus_HaveData;
+                return buffer;
+            }];
+            
+            __block NSData *data = [[NSData alloc] initWithBytes:outputBuffer.int16ChannelData[0] length:outputBuffer.frameLength * sizeof(int16_t)];
+            
+            if (callback) {
+                callback(data);
+            }
         }];
         
-        __block NSData *data = [[NSData alloc] initWithBytes:outputBuffer.int16ChannelData[0] length:outputBuffer.frameLength * sizeof(int16_t)];
-        
-        if (callback) {
-            callback(data);
+        [self.audioEngine prepare];
+        if (![self.audioEngine startAndReturnError:&error]) {
+            NSLog(@"%@", error.userInfo);
         }
-    }];
-    
-    [self.audioEngine prepare];
-    if (![self.audioEngine startAndReturnError:&error]) {
-        NSLog(@"%@", error.userInfo);
+    } @catch (NSException *exception) {
+        NSLog(@"麦克风被其它应用程序占用");
     }
 }
 

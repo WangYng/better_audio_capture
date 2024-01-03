@@ -86,31 +86,20 @@ class _MyAppState extends State<MyApp> {
                   onPressed: () async {
                     bytesBuilder.clear();
 
-                    // request audio session
-                    final session = await AudioSession.instance;
-                    await session.configure(AudioSessionConfiguration(
-                      avAudioSessionCategory: AVAudioSessionCategory.record,
-                      avAudioSessionMode: AVAudioSessionMode.measurement,
-                      avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
-                      avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
-                    ));
-
-                    if (await session.setActive(true)) {
-                      if (betterAudioCapture != null) {
-                        subscription?.cancel();
-                        betterAudioCapture?.stopCapture();
-                        betterAudioCapture?.dispose();
-                      }
-
-                      betterAudioCapture = BetterAudioCapture();
-                      subscription = betterAudioCapture?.pcmStream.listen((event) {
-                        bytesBuilder.add(event);
-                        print("recording");
-                      });
-
-                      betterAudioCapture?.init();
-                      betterAudioCapture?.startCapture();
+                    if (betterAudioCapture != null) {
+                      subscription?.cancel();
+                      betterAudioCapture?.stopCapture();
+                      betterAudioCapture?.dispose();
                     }
+
+                    betterAudioCapture = BetterAudioCapture();
+                    subscription = betterAudioCapture?.pcmStream.listen((event) {
+                      bytesBuilder.add(event);
+                      print("recording");
+                    });
+
+                    betterAudioCapture?.init();
+                    betterAudioCapture?.startCapture();
                   },
                 ),
               ),

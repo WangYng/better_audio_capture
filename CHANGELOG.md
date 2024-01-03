@@ -21,3 +21,6 @@ fix some issue
 
 ## 0.1.0
 fix some issue
+
+## 0.1.1
+fix some issue
